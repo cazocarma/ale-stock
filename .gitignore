@@ -1,0 +1,11 @@
+node_modules/
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.swp
+*.env
+*.db
+pgdata/
+data/
