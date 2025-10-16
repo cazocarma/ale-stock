@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:16
+    container_name: ale-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: alestock
+    volumes:
+      - ./db/data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  pgadmin:
+    image: dpage/pgadmin4:9.8
+    container_name: ale-pgadmin
+    depends_on:
+      db:
+        condition: service_started
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+
+  api:
+    build:
+      context: ./api/AleStock.Api
+      dockerfile: Dockerfile
+    container_name: ale-api
+    depends_on:
+      - db
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=alestock;Username=postgres;Password=postgres
+    ports:
+      - "8080:8080"
