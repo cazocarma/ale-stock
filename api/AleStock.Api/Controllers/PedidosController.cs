@@ -8,7 +8,6 @@ namespace AleStock.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
 public class PedidosController : ControllerBase
 {
     private readonly AleStockDbContext _context;
@@ -18,40 +17,85 @@ public class PedidosController : ControllerBase
         _context = context;
     }
 
-    // GET: api/pedidos
+    // 1️⃣ Crear pedido (solo Coordinador)
+    [HttpPost]
+    [Authorize(Roles = "Coordinador")]
+    public async Task<IActionResult> CrearPedido([FromBody] Pedido pedido)
+    {
+        if (pedido.Detalles == null || !pedido.Detalles.Any())
+            return BadRequest("El pedido debe incluir al menos un detalle.");
+
+        pedido.Fecha = DateTime.UtcNow;
+        pedido.Estado = "Pendiente";
+
+        // Guarda el pedido
+        _context.Pedidos.Add(pedido);
+        await _context.SaveChangesAsync();
+
+        // Crea movimientos automáticos para los productos del pedido
+        foreach (var detalle in pedido.Detalles)
+        {
+            var inventario = await _context.Inventarios
+                .FirstOrDefaultAsync(i => i.ProductoId == detalle.ProductoId);
+
+            if (inventario == null)
+                continue;
+
+            inventario.Cantidad -= detalle.Cantidad; // descuenta stock
+
+            var movimiento = new Movimiento
+            {
+                ProductoId = detalle.ProductoId,
+                Tipo = "SALIDA",
+                Cantidad = -detalle.Cantidad,
+                Comentario = $"Salida por pedido #{pedido.Id}",
+                UsuarioId = pedido.CreadoPorId,
+                Fecha = DateTime.UtcNow
+            };
+
+            _context.Movimientos.Add(movimiento);
+        }
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            mensaje = "Pedido creado correctamente.",
+            pedido
+        });
+    }
+
+    // 2️⃣ Listar pedidos (solo Bodega)
     [HttpGet]
-    public async Task<IActionResult> GetPedidos()
+    [Authorize(Roles = "Bodega")]
+    public async Task<IActionResult> ObtenerPedidos()
     {
         var pedidos = await _context.Pedidos
             .Include(p => p.Detalles)
-            .ThenInclude(d => d.Producto)
+                .ThenInclude(d => d.Producto)
+            .Include(p => p.CreadoPor)
+            .OrderByDescending(p => p.Fecha)
             .ToListAsync();
 
         return Ok(pedidos);
     }
 
-    // POST: api/pedidos
-    [Authorize(Roles = "Coordinador")]
-    [HttpPost]
-    public async Task<IActionResult> CreatePedido([FromBody] Pedido pedido)
-    {
-        pedido.Fecha = DateTime.UtcNow;
-        _context.Pedidos.Add(pedido);
-        await _context.SaveChangesAsync();
-        return Ok(pedido);
-    }
-
-    // PUT: api/pedidos/{id}/estado
-    [Authorize(Roles = "Bodega,Coordinador")]
-    [HttpPut("{id}/estado")]
-    public async Task<IActionResult> UpdateEstado(int id, [FromBody] string estado)
+    // 3️⃣ Actualizar estado (solo Bodega)
+    [HttpPatch("{id}/estado")]
+    [Authorize(Roles = "Bodega")]
+    public async Task<IActionResult> ActualizarEstado(int id, [FromBody] string nuevoEstado)
     {
         var pedido = await _context.Pedidos.FindAsync(id);
-        if (pedido == null) return NotFound();
+        if (pedido == null)
+            return NotFound();
 
-        pedido.Estado = estado;
+        pedido.Estado = nuevoEstado;
         await _context.SaveChangesAsync();
 
-        return Ok(pedido);
+        return Ok(new
+        {
+            mensaje = $"Pedido #{id} actualizado a estado {nuevoEstado}.",
+            pedido
+        });
     }
 }
