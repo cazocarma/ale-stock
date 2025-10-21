@@ -43,6 +43,43 @@ builder.Services.AddAuthentication(options =>
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AleStockDbContext>();
+
+    // Intentar conexión varias veces antes de migrar
+    var maxRetries = 10;
+    var delay = TimeSpan.FromSeconds(3);
+    var connected = false;
+
+    for (var i = 0; i < maxRetries; i++)
+    {
+        try
+        {
+            db.Database.CanConnect();
+            connected = true;
+            break;
+        }
+        catch
+        {
+            Console.WriteLine($"[INIT] Esperando conexión a la base de datos... intento {i + 1}/{maxRetries}");
+            Thread.Sleep(delay);
+        }
+    }
+
+    if (!connected)
+    {
+        Console.WriteLine("[INIT] No se pudo conectar a la base de datos. Abortando inicialización.");
+        throw new Exception("No se pudo conectar a PostgreSQL después de varios intentos.");
+    }
+
+    // Ejecutar migraciones y seeders
+    db.Database.Migrate();
+    DbInitializer.Seed(db);
+}
+
+
+// Middleware
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
