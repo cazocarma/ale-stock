@@ -18,48 +18,64 @@ public class InventarioController : ControllerBase
         _context = context;
     }
 
-    // 1️⃣ Obtener inventario completo
+    // 1️⃣ Listar todo el inventario
     [HttpGet]
-    public async Task<IActionResult> ObtenerInventario()
+    public async Task<IActionResult> GetAll()
     {
         var inventario = await _context.Inventarios
             .Include(i => i.Producto)
-            .OrderBy(i => i.Producto == null ? string.Empty : (i.Producto.Sku ?? string.Empty))
+            .OrderBy(i => i.Producto!.Sku)
             .ToListAsync();
 
         return Ok(inventario);
     }
 
-    // 2️⃣ Ajustar stock manualmente (por daño o ingreso)
-    [HttpPost("ajustar")]
-    public async Task<IActionResult> AjustarStock([FromBody] Movimiento ajuste)
+    // 2️⃣ Obtener un producto específico
+    [HttpGet("{productoId}")]
+    public async Task<IActionResult> GetByProducto(int productoId)
     {
         var inventario = await _context.Inventarios
-            .FirstOrDefaultAsync(i => i.ProductoId == ajuste.ProductoId);
+            .Include(i => i.Producto)
+            .FirstOrDefaultAsync(i => i.ProductoId == productoId);
 
         if (inventario == null)
-            return NotFound($"No existe inventario para el producto {ajuste.ProductoId}");
+            return NotFound($"No existe inventario para el producto {productoId}");
 
-        inventario.Cantidad += ajuste.Cantidad; // puede ser negativo o positivo
+        return Ok(inventario);
+    }
 
-        var movimiento = new Movimiento
+    // 3️⃣ Ajustar stock manual (entrada/salida/ajuste)
+    [HttpPost("ajustar")]
+    public async Task<IActionResult> AjustarStock([FromBody] Movimiento movimiento)
+    {
+        var inventario = await _context.Inventarios
+            .FirstOrDefaultAsync(i => i.ProductoId == movimiento.ProductoId);
+
+        if (inventario == null)
+            return NotFound($"No existe inventario para el producto {movimiento.ProductoId}");
+
+        // Actualiza stock
+        inventario.Cantidad += movimiento.Cantidad;
+
+        // Registra movimiento
+        var nuevoMovimiento = new Movimiento
         {
-            ProductoId = ajuste.ProductoId,
-            Tipo = ajuste.Cantidad > 0 ? "ENTRADA" : "AJUSTE",
-            Cantidad = ajuste.Cantidad,
-            Comentario = ajuste.Comentario ?? "Ajuste manual de inventario",
-            UsuarioId = ajuste.UsuarioId,
+            ProductoId = movimiento.ProductoId,
+            Tipo = movimiento.Cantidad > 0 ? "RE-STOCK" : "AJUSTE",
+            Cantidad = movimiento.Cantidad,
+            Comentario = movimiento.Comentario,
+            UsuarioId = movimiento.UsuarioId,
             Fecha = DateTime.UtcNow
         };
 
-        _context.Movimientos.Add(movimiento);
+        _context.Movimientos.Add(nuevoMovimiento);
         await _context.SaveChangesAsync();
 
         return Ok(new
         {
-            mensaje = "Stock ajustado correctamente",
+            mensaje = "Inventario ajustado correctamente",
             inventario,
-            movimiento
+            movimiento = nuevoMovimiento
         });
     }
 }

@@ -98,4 +98,20 @@ public class PedidosController : ControllerBase
             pedido
         });
     }
+
+    // 4️⃣ Aprobación de pedido (rol Coordinador)
+    [HttpPatch("{id}/aprobar")]
+    [Authorize(Roles = "Coordinador")]
+    public async Task<IActionResult> AprobarPedido(int id, [FromBody] string comentario)
+    {
+        var pedido = await _context.Pedidos.FindAsync(id);
+        if (pedido == null) return NotFound();
+
+        pedido.Estado = "Aprobado";
+        pedido.Comentario = comentario;
+        await _context.SaveChangesAsync();
+
+        return Ok(new { mensaje = "Pedido aprobado", pedido });
+    }
+
 }
