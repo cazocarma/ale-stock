@@ -42,3 +42,26 @@ services:
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=alestock;Username=postgres;Password=postgres
     ports:
       - "8080:8080"
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: ale-web
+    volumes:
+      - ./web:/app        # permite live reload
+      - /app/node_modules # evita conflictos entre host y contenedor
+    ports:
+      - "4200:4200"
+    depends_on:
+      - api
+  #web:
+  #  build:
+  #    context: ./web
+  #    dockerfile: Dockerfile
+  #  container_name: ale-web
+  #  restart: always
+  #  ports:
+  #    - "4200:80"
+  #  depends_on:
+  #    - api

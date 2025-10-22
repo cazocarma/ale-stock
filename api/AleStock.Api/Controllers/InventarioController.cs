@@ -54,14 +54,21 @@ public class InventarioController : ControllerBase
         if (inventario == null)
             return NotFound($"No existe inventario para el producto {movimiento.ProductoId}");
 
-        // Actualiza stock
-        inventario.Cantidad += movimiento.Cantidad;
+        var nuevoStock = inventario.Cantidad + movimiento.Cantidad;
 
-        // Registra movimiento
+        // Evitar stock negativo
+        if (nuevoStock < 0)
+            return BadRequest($"El ajuste dejaría el stock negativo para el producto {movimiento.ProductoId}");
+
+        inventario.Cantidad = nuevoStock;
+
+        // Determinar tipo de movimiento
+        var tipoMovimiento = movimiento.Cantidad > 0 ? "RE-STOCK" : "AJUSTE";
+
         var nuevoMovimiento = new Movimiento
         {
             ProductoId = movimiento.ProductoId,
-            Tipo = movimiento.Cantidad > 0 ? "RE-STOCK" : "AJUSTE",
+            Tipo = tipoMovimiento,
             Cantidad = movimiento.Cantidad,
             Comentario = movimiento.Comentario,
             UsuarioId = movimiento.UsuarioId,
@@ -73,9 +80,23 @@ public class InventarioController : ControllerBase
 
         return Ok(new
         {
-            mensaje = "Inventario ajustado correctamente",
+            mensaje = "Inventario actualizado correctamente",
             inventario,
             movimiento = nuevoMovimiento
         });
+    }
+
+    // 4️⃣ Listar productos con stock bajo el mínimo
+    [HttpGet("bajo-minimo/{minimo}")]
+    [Authorize(Roles = "Bodega,Coordinador")]
+    public async Task<IActionResult> GetStockBajoMinimo(int minimo)
+    {
+        var bajos = await _context.Inventarios
+            .Include(i => i.Producto)
+            .Where(i => i.Cantidad < minimo)
+            .OrderBy(i => i.Cantidad)
+            .ToListAsync();
+
+        return Ok(bajos);
     }
 }

@@ -1,4 +1,5 @@
 using AleStock.Api.Data;
+using AleStock.Api.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,7 +18,7 @@ public class MovimientosController : ControllerBase
         _context = context;
     }
 
-    // 1️⃣ Listar todos los movimientos
+    // 1️⃣ Listar todos los movimientos (últimos primero)
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -30,17 +31,62 @@ public class MovimientosController : ControllerBase
         return Ok(movimientos);
     }
 
-    // 2️⃣ Obtener movimientos por producto
+    // 2️⃣ Filtrar por producto
     [HttpGet("producto/{productoId}")]
     public async Task<IActionResult> GetByProducto(int productoId)
     {
         var movimientos = await _context.Movimientos
+            .Where(m => m.ProductoId == productoId)
             .Include(m => m.Producto)
             .Include(m => m.Usuario)
-            .Where(m => m.ProductoId == productoId)
+            .OrderByDescending(m => m.Fecha)
+            .ToListAsync();
+
+        if (!movimientos.Any())
+            return NotFound($"No existen movimientos para el producto {productoId}");
+
+        return Ok(movimientos);
+    }
+
+    // 3️⃣ Filtrar por rango de fechas (se fuerza UTC)
+    [HttpGet("rango")]
+    public async Task<IActionResult> GetByFecha([FromQuery] DateTime desde, [FromQuery] DateTime hasta)
+    {
+        // Forzamos las fechas a UTC para evitar error de Npgsql
+        desde = DateTime.SpecifyKind(desde, DateTimeKind.Utc);
+        hasta = DateTime.SpecifyKind(hasta, DateTimeKind.Utc);
+
+        var movimientos = await _context.Movimientos
+            .Where(m => m.Fecha >= desde && m.Fecha <= hasta)
+            .Include(m => m.Producto)
+            .Include(m => m.Usuario)
             .OrderByDescending(m => m.Fecha)
             .ToListAsync();
 
         return Ok(movimientos);
+    }
+
+    // 4️⃣ Resumen de entradas/salidas por producto
+    [HttpGet("resumen/{productoId}")]
+    public async Task<IActionResult> GetResumenProducto(int productoId)
+    {
+        var entradas = await _context.Movimientos
+            .Where(m => m.ProductoId == productoId && m.Cantidad > 0)
+            .SumAsync(m => m.Cantidad);
+
+        var salidas = await _context.Movimientos
+            .Where(m => m.ProductoId == productoId && m.Cantidad < 0)
+            .SumAsync(m => m.Cantidad);
+
+        var total = entradas + salidas;
+
+        return Ok(new
+        {
+            productoId,
+            entradas,
+            salidas,
+            total,
+            mensaje = "Resumen de movimientos por producto"
+        });
     }
 }

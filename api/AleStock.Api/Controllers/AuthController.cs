@@ -2,9 +2,11 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using AleStock.Api.Data;
+using AleStock.Api.Helpers;
 using AleStock.Api.Models;
 using AleStock.Api.Models.Auth;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -24,12 +26,14 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
-    public IActionResult Login([FromBody] AuthRequest request)
+    public async Task<IActionResult> Login([FromBody] AuthRequest request)
     {
-        var user = _context.Usuarios
-            .FirstOrDefault(u => u.Email == request.Email && u.PasswordHash == request.Password);
+        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+            return BadRequest(new { message = "Email y contraseña son requeridos" });
 
-        if (user == null)
+        var user = await _context.Usuarios.FirstOrDefaultAsync(u => u.Email.ToLower() == request.Email.ToLower());
+
+        if (user == null || !PasswordHasher.Verify(request.Password, user.PasswordHash))
             return Unauthorized(new { message = "Credenciales inválidas" });
 
         var tokenHandler = new JwtSecurityTokenHandler();
@@ -45,7 +49,10 @@ public class AuthController : ControllerBase
             Expires = DateTime.UtcNow.AddHours(4),
             Issuer = _jwtSettings.Issuer,
             Audience = _jwtSettings.Audience,
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            SigningCredentials = new SigningCredentials(
+                new SymmetricSecurityKey(key),
+                SecurityAlgorithms.HmacSha256Signature
+            )
         };
 
         var token = tokenHandler.CreateToken(tokenDescriptor);
