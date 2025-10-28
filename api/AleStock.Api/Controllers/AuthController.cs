@@ -25,29 +25,29 @@ public class AuthController : ControllerBase
         _jwtSettings = jwtSettings.Value;
     }
 
+    
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] AuthRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
             return BadRequest(new { message = "Email y contraseña son requeridos" });
 
-        var user = await _context.Usuarios.FirstOrDefaultAsync(u => u.Email.ToLower() == request.Email.ToLower());
+        var user = await _context.Usuarios
+            .FirstOrDefaultAsync(u => u.Email.ToLower() == request.Email.ToLower());
 
         if (user == null || !PasswordHasher.Verify(request.Password, user.PasswordHash))
             return Unauthorized(new { message = "Credenciales inválidas" });
 
-        // 🔹 Crear los claims del token
+        // 🔹 Claims personalizados con nombres simples
         var claims = new[]
         {
-            new Claim(ClaimTypes.Name, user.Email),
-            new Claim(ClaimTypes.Role, user.Rol),
-            // 🔸 Agregar el ID del usuario
-            new Claim("UserId", user.Id.ToString()),
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim("Nombre", user.Nombre ?? string.Empty)
+            new Claim("email", user.Email),
+            new Claim("role", user.Rol),
+            new Claim("userId", user.Id.ToString()),
+            new Claim("nombre", user.Nombre ?? string.Empty)
         };
 
-        // 🔹 Generar el token
+        // 🔹 Generar el token JWT
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Key));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
@@ -55,18 +55,18 @@ public class AuthController : ControllerBase
             issuer: _jwtSettings.Issuer,
             audience: _jwtSettings.Audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddHours(4),
+            expires: DateTime.UtcNow.AddHours(1),
             signingCredentials: creds
         );
 
         var jwt = new JwtSecurityTokenHandler().WriteToken(token);
 
-        // 🔹 Devolver respuesta
         return Ok(new AuthResponse
         {
             Token = jwt,
-            Nombre = user.Nombre,
+            Nombre = user.Nombre ?? string.Empty,
             Rol = user.Rol
         });
     }
+
 }

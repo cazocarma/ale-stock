@@ -1,0 +1,12 @@
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th, td {
+  border: 1px solid #e5e7eb;
+}
+
+button {
+  transition: background-color 0.2s ease;
+}

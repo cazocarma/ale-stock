@@ -8,7 +8,7 @@ namespace AleStock.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Bodega")]
+[Authorize(Roles = "Bodega,Coordinador")]
 public class MovimientosController : ControllerBase
 {
     private readonly AleStockDbContext _context;

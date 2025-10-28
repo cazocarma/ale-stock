@@ -1,12 +1,12 @@
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using AleStock.Api.Data;
 using AleStock.Api.Models.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,7 +18,7 @@ builder.Services
         options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
         options.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
         options.SerializerSettings.Formatting = Formatting.Indented;
-        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+        options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
     });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

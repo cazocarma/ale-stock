@@ -33,7 +33,7 @@ public class PedidosController : ControllerBase
 
     // 2️⃣ Listar pedidos (solo Bodega)
     [HttpGet]
-    [Authorize(Roles = "Bodega")]
+    [Authorize(Roles = "Bodega,Coordinador")]
     public async Task<IActionResult> ObtenerPedidos()
     {
         var pedidos = await _context.Pedidos
