@@ -1,72 +1,85 @@
+```markdown
 # AleStock
 
 Sistema interno de comunicación y gestión de pedidos entre **Coordinación** y **Bodega**.  
-Proyecto desarrollado en **.NET 8**, con base de datos **PostgreSQL**, y listo para ejecutar mediante **Docker Compose**.
+Proyecto desarrollado en **.NET 8**, **Angular 19 (Vite + Tailwind CSS)** y **PostgreSQL**, totalmente orquestado mediante **Docker Compose**.
 
 ---
 
-## 📘 Descripción general
+## Descripción general
 
-AleStock permite gestionar pedidos, inventario y movimientos internos entre la coordinación y la bodega, sin involucrar las sucursales.  
-Incluye autenticación JWT, migraciones automáticas y seeders de datos iniciales.
+AleStock centraliza la gestión de inventario, pedidos y movimientos entre la bodega y la coordinación, evitando dependencias con las sucursales.  
+Incluye autenticación basada en JWT, validación por roles y migraciones automáticas con datos iniciales (seeders).
 
 ---
 
-## 🧩 Estructura del proyecto
+## Estructura del proyecto
 
 ```
+
 ale-stock/
 │
-├── api/                     # Backend ASP.NET Core 8
+├── api/                        # Backend ASP.NET Core 8
 │   └── AleStock.Api/
 │       ├── Controllers/
 │       ├── Data/
 │       ├── Models/
+│       ├── Helpers/
 │       ├── Program.cs
 │       ├── AleStock.Api.csproj
 │       └── ...
 │
-├── web/                     # (Pendiente) Frontend Angular 18
+├── web/                        # Frontend Angular 19 (Vite + Tailwind)
+│   ├── src/app/
+│   │   ├── pages/              # Páginas principales (Inventario, Pedidos, etc.)
+│   │   ├── services/           # Servicios HTTP con interceptor JWT
+│   │   ├── guards/             # AuthGuard
+│   │   ├── app.routes.ts       # Rutas standalone
+│   │   └── ...
+│   ├── tailwind.config.js
+│   ├── vite.config.ts
+│   └── package.json
 │
-├── db/                      # Datos persistentes de PostgreSQL
+├── db/                         # Datos persistentes de PostgreSQL
 │   └── data/
 │
-└── docker-compose.yml        # Orquestación de contenedores
-```
+└── docker-compose.yml           # Orquestación de API + DB + Frontend
+
+````
 
 ---
 
-## ⚙️ Stack tecnológico
+## Stack tecnológico
 
 | Capa | Tecnología |
 |------|-------------|
-| **Backend** | ASP.NET Core 8 (C#) |
-| **Base de datos** | PostgreSQL 16 |
-| **ORM** | Entity Framework Core 8 |
-| **Autenticación** | JWT Bearer |
-| **Documentación API** | Swagger / OpenAPI |
-| **Infraestructura** | Docker Compose |
+| Backend | ASP.NET Core 8 (C#) |
+| Base de datos | PostgreSQL 16 |
+| ORM | Entity Framework Core 8 |
+| Autenticación | JWT Bearer |
+| Frontend | Angular 19 (Standalone Components + Vite + Tailwind CSS 4) |
+| Infraestructura | Docker Compose |
 
 ---
 
-## 🚀 Ejecución con Docker
+## Ejecución con Docker
 
-### 1. Construir e iniciar el entorno
+### 1. Construir e iniciar todo el entorno
 
 ```bash
 docker compose build
 docker compose up -d
-```
+````
 
-Esto levanta dos contenedores:
-- **ale-postgres** → Base de datos PostgreSQL (puerto `5432`)
-- **ale-api** → API .NET 8 (puerto `8080`)
+Esto levanta tres contenedores:
 
-La API se conectará automáticamente, aplicará **migraciones** y ejecutará los **seeders iniciales**.
+* ale-postgres → Base de datos PostgreSQL (puerto 5432)
+* ale-api → API .NET 8 (puerto 8080)
+* ale-web → Frontend Angular (puerto 4200)
 
 ---
 
-### 2. Verificar contenedores activos
+### 2. Verificar contenedores
 
 ```bash
 docker compose ps
@@ -74,23 +87,17 @@ docker compose ps
 
 ---
 
-### 3. Acceder a Swagger
+### 3. Acceder a la aplicación
 
-```
-http://localhost:8080/swagger
-```
-
-Desde ahí podrás probar:
-- **POST /api/Auth/login**
-- **GET /api/Pedidos**
-- **POST /api/Pedidos**
-- etc.
+| Servicio                | URL                                                            |
+| ----------------------- | -------------------------------------------------------------- |
+| Frontend Angular        | [http://localhost:4200](http://localhost:4200)                 |
+| API REST                | [http://localhost:8080](http://localhost:8080)                 |
+| Swagger (Documentación) | [http://localhost:8080/swagger](http://localhost:8080/swagger) |
 
 ---
 
-## 🔐 Autenticación JWT
-
-Para probar autenticación:
+## Autenticación JWT
 
 ```json
 POST /api/Auth/login
@@ -100,26 +107,35 @@ POST /api/Auth/login
 }
 ```
 
-El token recibido debe enviarse en los headers:
+Respuesta:
+
+```json
+{
+  "token": "<JWT>",
+  "nombre": "Alejandro Neira",
+  "rol": "Coordinador"
+}
+```
+
+El token se guarda en localStorage y es inyectado automáticamente por el interceptor:
+
 ```
 Authorization: Bearer <TOKEN>
 ```
 
 ---
 
-## 🧪 Datos iniciales (Seeder)
+## Datos iniciales (Seeders automáticos)
 
-Los seeders cargan automáticamente al iniciar por primera vez:
+| Tipo        | Contenido                    |
+| ----------- | ---------------------------- |
+| Usuarios    | Coordinador y Bodega         |
+| Productos   | RayBan, Oakley, Prada        |
+| Inventario  | Stock inicial                |
+| Pedidos     | Pedido de ejemplo            |
+| Movimientos | Entradas y salidas simuladas |
 
-| Tipo | Datos |
-|------|-------|
-| Usuarios | Coordinador y Bodega |
-| Productos | RayBan, Oakley, Prada |
-| Inventario | Stock inicial |
-| Pedido | Pedido de ejemplo |
-| Movimientos | Re-stock y ajuste |
-
-Si deseas reiniciar la base y volver a ejecutar los seeders:
+Para reiniciar el entorno y los datos iniciales:
 
 ```bash
 docker compose down -v
@@ -128,29 +144,48 @@ docker compose up -d
 
 ---
 
-## 🧰 Comandos útiles
+## Comandos útiles
 
 ```bash
-# Ejecutar migraciones manualmente (opcional)
+# Ejecutar migraciones manualmente
 dotnet ef migrations add <Nombre>
 dotnet ef database update
 
-# Ver logs de la API
+# Ver logs en tiempo real
 docker logs -f ale-api
+docker logs -f ale-web
 
-# Acceder a la base de datos
+# Conectarse a PostgreSQL
 docker exec -it ale-postgres psql -U postgres -d alestock
 ```
 
 ---
 
-## 📄 Entorno y configuración
+## Frontend Angular 19
 
-### `appsettings.json`
+### Dependencias principales
+
+* Angular 19 (Standalone Components)
+* Vite como build tool
+* Tailwind CSS 4
+* RxJS 7.8
+* JWT Interceptor y AuthGuard
+* HttpClient withFetch() optimizado para SSR
+
+### Estructura del frontend
+
+| Carpeta     | Descripción                                                     |
+| ----------- | --------------------------------------------------------------- |
+| pages/      | Vistas principales: Inventario, Movimientos, Pedidos, Productos |
+| services/   | Manejo de APIs con headers JWT                                  |
+| guards/     | Protección de rutas por rol                                     |
+| components/ | Sidebar, Layouts, Formularios dinámicos                         |
+
+---
+
+## Configuración JWT (.NET)
+
 ```json
-"ConnectionStrings": {
-  "DefaultConnection": "Host=db;Port=5432;Database=alestock;Username=postgres;Password=postgres"
-},
 "Jwt": {
   "Key": "EstaClaveJWTDeAleStockEsMuySeguraYDeAlMenos32Caracteres",
   "Issuer": "AleStock",
@@ -160,19 +195,33 @@ docker exec -it ale-postgres psql -U postgres -d alestock
 
 ---
 
-## 🧱 Próximos hitos
+## Próximos hitos
 
-| Hito | Descripción |
-|------|--------------|
-| Hito 7 | Controlador de inventario y movimientos |
-| Hito 8 | Frontend Angular (panel de coordinación y bodega) |
-| Hito 9 | Integración con despliegue en QA / PRD |
-| Hito 10 | Monitoreo y métricas (Prometheus + Grafana opcional) |
+| Hito    | Descripción                                      |
+| ------- | ------------------------------------------------ |
+| Hito 8  | Normalización visual (Tailwind UI unificado)     |
+| Hito 9  | Roles dinámicos en frontend (Coordinador/Bodega) |
+| Hito 10 | Implementar despliegue QA/PRD automatizado       |
+| Hito 11 | Dashboard de métricas (Inventario y Pedidos)     |
 
 ---
 
-## 📜 Licencia
+## Estado actual del desarrollo
 
-Proyecto interno de desarrollo – 2025.  
-Uso restringido al equipo de desarrollo de **AleStock**.
+* Backend funcional con controladores: Auth, Productos, Inventario, Movimientos, Pedidos
+* Base de datos y seeders automáticos
+* Frontend Angular 19 unificado con Tailwind
+* Autenticación completa con JWT
+* Sidebar dinámico por rol
+* Próximo: Reportes, métricas y exportaciones
+
+---
+
+## Licencia
+
+Proyecto interno — 2025
+Uso restringido al equipo de desarrollo de AleStock.
+Desarrollado por el Equipo de Ingeniería.
+
+```
 ```

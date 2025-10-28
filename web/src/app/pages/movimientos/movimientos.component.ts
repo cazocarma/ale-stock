@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule, DatePipe, NgFor, NgIf } from '@angular/common';
+import { CommonModule, DatePipe, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
@@ -7,7 +7,7 @@ import { AuthService } from '../../services/auth.service';
 @Component({
   selector: 'app-movimientos',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIf, NgFor, DatePipe],
+  imports: [CommonModule, FormsModule, NgIf, DatePipe],
   templateUrl: './movimientos.component.html',
 })
 export class MovimientosComponent implements OnInit {

@@ -1,13 +1,13 @@
-<div class="p-4 bg-white rounded shadow">
-  <h2 class="text-xl font-semibold mb-4 text-gray-700">Inventario</h2>
+<div class="max-w-6xl mx-auto bg-white rounded-lg shadow p-6">
+  <h1 class="text-2xl font-bold text-blue-800 mb-6">Gestión de Inventario</h1>
 
   <!-- Filtros -->
-  <div class="flex flex-wrap items-center gap-3 mb-4">
+  <div class="flex flex-wrap items-center gap-3 mb-6">
     <input
       type="text"
       [(ngModel)]="filtro"
       placeholder="Buscar producto..."
-      class="border border-gray-300 rounded px-3 py-2 flex-1"
+      class="flex-1 border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-400"
     />
     <button
       (click)="obtenerBajoMinimo()"
@@ -19,35 +19,35 @@
 
   <!-- Tabla -->
   <div class="overflow-x-auto">
-    <table class="w-full border-collapse">
-      <thead class="bg-blue-800 text-white">
+    <table class="min-w-full border-collapse text-sm">
+      <thead class="bg-blue-700 text-white uppercase">
         <tr>
-          <th class="p-2 text-left">SKU</th>
-          <th class="p-2 text-left">Marca</th>
-          <th class="p-2 text-left">Modelo</th>
-          <th class="p-2 text-center">Cantidad</th>
-          <th class="p-2 text-center">Ubicación</th>
-          <th class="p-2 text-center">Acciones</th>
+          <th class="px-4 py-2 text-left">SKU</th>
+          <th class="px-4 py-2 text-left">Marca</th>
+          <th class="px-4 py-2 text-left">Modelo</th>
+          <th class="px-4 py-2 text-center">Cantidad</th>
+          <th class="px-4 py-2 text-center">Ubicación</th>
+          <th class="px-4 py-2 text-center">Acciones</th>
         </tr>
       </thead>
       <tbody>
-        @for (item of filtrarInventario(); track item.id){
+        @for (item of filtrarInventario(); track item.id) {
           <tr class="border-b hover:bg-gray-50">
-            <td class="p-2">{{ item.producto.sku }}</td>
-            <td class="p-2">{{ item.producto.marca }}</td>
-            <td class="p-2">{{ item.producto.modelo }}</td>
-            <td class="p-2 text-center">{{ item.cantidad }}</td>
-            <td class="p-2 text-center">{{ item.ubicacion }}</td>
-            <td class="p-2 text-center">
+            <td class="px-4 py-2">{{ item.producto.sku }}</td>
+            <td class="px-4 py-2">{{ item.producto.marca }}</td>
+            <td class="px-4 py-2">{{ item.producto.modelo }}</td>
+            <td class="px-4 py-2 text-center">{{ item.cantidad }}</td>
+            <td class="px-4 py-2 text-center">{{ item.ubicacion }}</td>
+            <td class="px-4 py-2 text-center space-x-2">
               <button
                 (click)="mostrarAjuste(item, 'entrada')"
-                class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded mr-1"
+                class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
               >
                 + Entrada
               </button>
               <button
                 (click)="mostrarAjuste(item, 'salida')"
-                class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
               >
                 - Salida
               </button>
@@ -62,7 +62,7 @@
   @if (mostrarModal) {
     <div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
       <div class="bg-white p-6 rounded shadow w-[400px]">
-        <h3 class="text-lg font-semibold mb-4">
+        <h3 class="text-lg font-semibold mb-4 text-gray-800">
           Ajuste de stock ({{ tipoMovimiento === 'entrada' ? 'Entrada' : 'Salida' }})
         </h3>
 
