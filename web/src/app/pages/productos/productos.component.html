@@ -1,0 +1,85 @@
+<div class="max-w-6xl mx-auto">
+  <h1 class="text-2xl font-bold mb-6 text-blue-800">Gestión de Productos</h1>
+
+  <!-- Buscador -->
+  <div class="flex gap-2 mb-6">
+    <input
+      type="text"
+      [(ngModel)]="terminoBusqueda"
+      placeholder="Buscar producto..."
+      class="flex-1 border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-400"
+    />
+    <button (click)="buscar()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Buscar</button>
+  </div>
+
+  <!-- Formulario -->
+  <div class="bg-white p-4 rounded shadow mb-6">
+    <h2 class="text-lg font-semibold mb-4">
+      {{ editando ? 'Editar Producto' : 'Nuevo Producto' }}
+    </h2>
+
+    <div class="grid grid-cols-4 gap-3 mb-3">
+      <input
+        [(ngModel)]="productoForm.sku"
+        placeholder="SKU"
+        class="border px-3 py-2 rounded"
+      />
+      <input
+        [(ngModel)]="productoForm.marca"
+        placeholder="Marca"
+        class="border px-3 py-2 rounded"
+      />
+      <input
+        [(ngModel)]="productoForm.modelo"
+        placeholder="Modelo"
+        class="border px-3 py-2 rounded"
+      />
+      <select [(ngModel)]="productoForm.estado" class="border px-3 py-2 rounded">
+        <option value="activo">Activo</option>
+        <option value="descontinuado">Descontinuado</option>
+      </select>
+    </div>
+
+    <div class="flex gap-2">
+      <button (click)="guardar()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+        {{ editando ? 'Actualizar' : 'Agregar' }}
+      </button>
+      <button
+        *ngIf="editando"
+        (click)="cancelarEdicion()"
+        class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
+      >
+        Cancelar
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  <div class="bg-white rounded shadow overflow-hidden">
+    <table class="min-w-full text-left border-collapse">
+      <thead class="bg-blue-700 text-white">
+        <tr>
+          <th class="py-2 px-4">ID</th>
+          <th class="py-2 px-4">SKU</th>
+          <th class="py-2 px-4">Marca</th>
+          <th class="py-2 px-4">Modelo</th>
+          <th class="py-2 px-4">Estado</th>
+          <th class="py-2 px-4 text-center">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of productos" class="border-b hover:bg-gray-50">
+          <td class="py-2 px-4">{{ p.id }}</td>
+          <td class="py-2 px-4">{{ p.sku }}</td>
+          <td class="py-2 px-4">{{ p.marca }}</td>
+          <td class="py-2 px-4">{{ p.modelo }}</td>
+          <td class="py-2 px-4">{{ p.estado }}</td>
+          <td class="py-2 px-4 text-center">
+            <button (click)="editar(p)" class="text-blue-600 hover:underline mr-2">Editar</button>
+            <button (click)="eliminar(p.id)" class="text-red-600 hover:underline">Eliminar</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
