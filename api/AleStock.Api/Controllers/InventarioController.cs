@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using AleStock.Api.Data;
 using AleStock.Api.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -8,7 +9,7 @@ namespace AleStock.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Bodega")]
+[Authorize(Roles = "Bodega,Coordinador")]
 public class InventarioController : ControllerBase
 {
     private readonly AleStockDbContext _context;
@@ -48,6 +49,17 @@ public class InventarioController : ControllerBase
     [HttpPost("ajustar")]
     public async Task<IActionResult> AjustarStock([FromBody] Movimiento movimiento)
     {
+        // 🔹 Obtener el ID del usuario autenticado desde el JWT
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                          ?? User.FindFirst("UserId")?.Value;
+
+        if (string.IsNullOrEmpty(userIdClaim))
+            return Unauthorized("No se pudo determinar el usuario autenticado.");
+
+        if (!int.TryParse(userIdClaim, out int userId))
+            return BadRequest("El ID de usuario en el token no es válido.");
+
+        // 🔹 Buscar inventario
         var inventario = await _context.Inventarios
             .FirstOrDefaultAsync(i => i.ProductoId == movimiento.ProductoId);
 
@@ -56,13 +68,13 @@ public class InventarioController : ControllerBase
 
         var nuevoStock = inventario.Cantidad + movimiento.Cantidad;
 
-        // Evitar stock negativo
+        // 🔹 Evitar stock negativo
         if (nuevoStock < 0)
             return BadRequest($"El ajuste dejaría el stock negativo para el producto {movimiento.ProductoId}");
 
         inventario.Cantidad = nuevoStock;
 
-        // Determinar tipo de movimiento
+        // 🔹 Registrar movimiento
         var tipoMovimiento = movimiento.Cantidad > 0 ? "RE-STOCK" : "AJUSTE";
 
         var nuevoMovimiento = new Movimiento
@@ -71,7 +83,7 @@ public class InventarioController : ControllerBase
             Tipo = tipoMovimiento,
             Cantidad = movimiento.Cantidad,
             Comentario = movimiento.Comentario,
-            UsuarioId = movimiento.UsuarioId,
+            UsuarioId = userId, // ✅ ahora viene del token
             Fecha = DateTime.UtcNow
         };
 
@@ -88,7 +100,6 @@ public class InventarioController : ControllerBase
 
     // 4️⃣ Listar productos con stock bajo el mínimo
     [HttpGet("bajo-minimo/{minimo}")]
-    [Authorize(Roles = "Bodega,Coordinador")]
     public async Task<IActionResult> GetStockBajoMinimo(int minimo)
     {
         var bajos = await _context.Inventarios

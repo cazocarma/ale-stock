@@ -36,28 +36,32 @@ public class AuthController : ControllerBase
         if (user == null || !PasswordHasher.Verify(request.Password, user.PasswordHash))
             return Unauthorized(new { message = "Credenciales inválidas" });
 
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.UTF8.GetBytes(_jwtSettings.Key);
-
-        var tokenDescriptor = new SecurityTokenDescriptor
+        // 🔹 Crear los claims del token
+        var claims = new[]
         {
-            Subject = new ClaimsIdentity(new[]
-            {
-                new Claim(ClaimTypes.Name, user.Email),
-                new Claim(ClaimTypes.Role, user.Rol)
-            }),
-            Expires = DateTime.UtcNow.AddHours(4),
-            Issuer = _jwtSettings.Issuer,
-            Audience = _jwtSettings.Audience,
-            SigningCredentials = new SigningCredentials(
-                new SymmetricSecurityKey(key),
-                SecurityAlgorithms.HmacSha256Signature
-            )
+            new Claim(ClaimTypes.Name, user.Email),
+            new Claim(ClaimTypes.Role, user.Rol),
+            // 🔸 Agregar el ID del usuario
+            new Claim("UserId", user.Id.ToString()),
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim("Nombre", user.Nombre ?? string.Empty)
         };
 
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        var jwt = tokenHandler.WriteToken(token);
+        // 🔹 Generar el token
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Key));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
+        var token = new JwtSecurityToken(
+            issuer: _jwtSettings.Issuer,
+            audience: _jwtSettings.Audience,
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(4),
+            signingCredentials: creds
+        );
+
+        var jwt = new JwtSecurityTokenHandler().WriteToken(token);
+
+        // 🔹 Devolver respuesta
         return Ok(new AuthResponse
         {
             Token = jwt,

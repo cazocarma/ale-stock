@@ -1,8 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -11,31 +11,27 @@ import { HttpClient } from '@angular/common/http';
   templateUrl: './login.component.html',
 })
 export class LoginComponent {
+  private auth = inject(AuthService);
+  private router = inject(Router);
+
   email = '';
   password = '';
+  errorMsg = '';
   loading = false;
-  error = '';
-
-  constructor(private http: HttpClient, private router: Router) {}
 
   login() {
     this.loading = true;
-    this.error = '';
+    this.errorMsg = '';
 
-    this.http
-      .post<{ token: string }>('http://localhost:8080/api/auth/login', {
-        email: this.email,
-        password: this.password,
-      })
-      .subscribe({
-        next: (res) => {
-          localStorage.setItem('token', res.token);
-          this.router.navigate(['/dashboard']);
-        },
-        error: () => {
-          this.error = 'Credenciales incorrectas.';
-          this.loading = false;
-        },
-      });
+    this.auth.login(this.email, this.password).subscribe({
+      next: (res) => {
+        this.auth.saveToken(res.token);
+        this.router.navigate(['/dashboard']);
+      },
+      error: (err) => {
+        this.errorMsg = err.error?.message || 'Credenciales incorrectas';
+        this.loading = false;
+      },
+    });
   }
 }

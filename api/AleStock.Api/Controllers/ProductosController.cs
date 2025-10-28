@@ -35,7 +35,9 @@ public class ProductosController : ControllerBase
     {
         var producto = await _context.Productos.FindAsync(id);
         if (producto == null)
-            return NotFound($"No se encontró el producto con ID {id}");
+            return NotFound(new {
+                mensaje = $"No se encontró el producto con ID {id}"
+            });
 
         return Ok(producto);
     }
@@ -46,7 +48,9 @@ public class ProductosController : ControllerBase
     public async Task<IActionResult> Crear([FromBody] Producto producto)
     {
         if (await _context.Productos.AnyAsync(p => p.Sku == producto.Sku))
-            return BadRequest($"Ya existe un producto con SKU {producto.Sku}");
+            return BadRequest(new {
+                mensaje = $"Ya existe un producto con SKU {producto.Sku}"
+            });
 
         _context.Productos.Add(producto);
         await _context.SaveChangesAsync();
@@ -76,7 +80,9 @@ public class ProductosController : ControllerBase
     {
         var existente = await _context.Productos.FindAsync(id);
         if (existente == null)
-            return NotFound($"No se encontró el producto con ID {id}");
+            return NotFound(new {
+                mensaje = $"No se encontró el producto con ID {id}"
+            });
 
         existente.Sku = producto.Sku;
         existente.Marca = producto.Marca;
@@ -94,7 +100,9 @@ public class ProductosController : ControllerBase
     {
         var producto = await _context.Productos.FindAsync(id);
         if (producto == null)
-            return NotFound($"No se encontró el producto con ID {id}");
+            return NotFound(new {
+                mensaje = $"No se encontró el producto con ID {id}"
+            });
 
         // Eliminar también del inventario
         var inventario = await _context.Inventarios
@@ -106,7 +114,10 @@ public class ProductosController : ControllerBase
         _context.Productos.Remove(producto);
         await _context.SaveChangesAsync();
 
-        return Ok($"Producto {id} eliminado correctamente junto a su inventario asociado");
+        return Ok(new {
+            mensaje = $"Producto {id} eliminado correctamente junto a su inventario asociado",
+            eliminado = true
+        });
     }
 
     // 6️⃣ Buscar por texto (SKU, Marca o Modelo)
@@ -114,7 +125,9 @@ public class ProductosController : ControllerBase
     public async Task<IActionResult> Buscar([FromQuery] string q)
     {
         if (string.IsNullOrWhiteSpace(q))
-            return BadRequest("Debe ingresar un texto de búsqueda");
+            return BadRequest(new {
+                mensaje = "Debe ingresar un texto de búsqueda"
+            });
 
         var productos = await _context.Productos
             .Where(p =>

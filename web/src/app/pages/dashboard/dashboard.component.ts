@@ -1,20 +1,38 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
+import { NgIf, NgClass } from '@angular/common';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule],
   templateUrl: './dashboard.component.html',
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    NgIf,
+    NgClass
+  ],
 })
-export class DashboardComponent {
-  user = localStorage.getItem('token') ? 'Usuario autenticado' : 'Invitado';
+export class DashboardComponent implements OnInit {
+  sidebarOpen = true;
+  role: string | null = null;
+  userName: string | null = null;
 
-  constructor(private router: Router) {}
+  constructor(private auth: AuthService) {}
+
+  ngOnInit() {
+    const user = this.auth.getUserInfo();
+    this.role = user?.role || null;
+    this.userName = user?.name || null;
+  }
+
+  toggleSidebar() {
+    this.sidebarOpen = !this.sidebarOpen;
+  }
 
   logout() {
-    localStorage.removeItem('token');
-    this.router.navigate(['/login']);
+    this.auth.logout();
   }
 }
