@@ -1,78 +1,64 @@
-<div class="bg-white p-6 rounded-lg shadow">
-  <h2 class="text-2xl font-semibold mb-4 text-gray-800">Movimientos de Inventario</h2>
+<div class="max-w-6xl mx-auto bg-white rounded-lg shadow p-6">
+  <h1 class="text-2xl font-bold text-blue-800 mb-6">Movimientos de Inventario</h1>
 
   <!-- Filtros -->
-  <div class="flex flex-wrap gap-4 mb-6">
+  <div class="flex flex-wrap gap-3 mb-6">
     <input
       type="number"
       placeholder="ID Producto"
       [(ngModel)]="filtroProductoId"
-      class="border rounded px-3 py-2 w-40 focus:ring focus:ring-blue-300"
+      class="border border-gray-300 rounded px-3 py-2 w-40 focus:ring-2 focus:ring-blue-400"
     />
-
     <input
       type="date"
       [(ngModel)]="fechaInicio"
-      class="border rounded px-3 py-2 focus:ring focus:ring-blue-300"
+      class="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-400"
     />
     <input
       type="date"
       [(ngModel)]="fechaFin"
-      class="border rounded px-3 py-2 focus:ring focus:ring-blue-300"
+      class="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-400"
     />
 
-    <button
-      (click)="filtrarPorProducto()"
-      class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-    >
+    <button (click)="filtrarPorProducto()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
       Buscar Producto
     </button>
-
-    <button
-      (click)="filtrarPorRango()"
-      class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
-    >
+    <button (click)="filtrarPorRango()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
       Filtrar por Rango
     </button>
-
-    <button
-      (click)="obtenerResumen()"
-      class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition"
-    >
+    <button (click)="obtenerResumen()" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
       Ver Resumen
     </button>
-
-    <button
-      (click)="cargarMovimientos()"
-      class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 transition"
-    >
+    <button (click)="cargarMovimientos()" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">
       Reset
     </button>
   </div>
 
   <!-- Tabla -->
   <div *ngIf="!cargando; else loading">
-    <table class="w-full border-collapse">
-      <thead class="bg-blue-100 text-gray-700">
+    <table class="min-w-full border-collapse text-sm">
+      <thead class="bg-blue-700 text-white uppercase">
         <tr>
-          <th class="p-2 text-left">ID</th>
-          <th class="p-2 text-left">Producto</th>
-          <th class="p-2 text-left">Tipo</th>
-          <th class="p-2 text-left">Cantidad</th>
-          <th class="p-2 text-left">Usuario</th>
-          <th class="p-2 text-left">Fecha</th>
+          <th class="px-4 py-2 text-left">ID</th>
+          <th class="px-4 py-2 text-left">Producto</th>
+          <th class="px-4 py-2 text-left">Tipo</th>
+          <th class="px-4 py-2 text-left">Cantidad</th>
+          <th class="px-4 py-2 text-left">Usuario</th>
+          <th class="px-4 py-2 text-left">Fecha</th>
         </tr>
       </thead>
       <tbody>
         @for (mov of movimientos; track mov.id) {
           <tr class="border-b hover:bg-gray-50">
-            <td class="p-2">{{ mov.id }}</td>
-            <td class="p-2">{{ mov.producto?.sku + "-" + mov.producto?.marca + "-" + mov.producto?.modelo}}</td>
-            <td class="p-2">{{ mov.tipo }}</td>
-            <td class="p-2">{{ mov.cantidad }}</td>
-            <td class="p-2">{{ mov.usuario?.nombre }}</td>
-            <td class="p-2">{{ mov.fecha | date: 'short' }}</td>
-          </tr> 
+            <td class="px-4 py-2">{{ mov.id }}</td>
+            <td class="px-4 py-2">
+              {{ mov.producto?.sku }} - {{ mov.producto?.marca }} - {{ mov.producto?.modelo }}
+            </td>
+            <td class="px-4 py-2">{{ mov.tipo }}</td>
+            <td class="px-4 py-2">{{ mov.cantidad }}</td>
+            <td class="px-4 py-2">{{ mov.usuario?.nombre }}</td>
+            <td class="px-4 py-2">{{ mov.fecha | date: 'short' }}</td>
+          </tr>
         }
       </tbody>
     </table>
@@ -83,8 +69,8 @@
   </ng-template>
 
   <!-- Resumen -->
-  <div *ngIf="resumen" class="mt-8 bg-gray-50 p-4 rounded">
-    <h3 class="text-lg font-semibold mb-2 text-gray-700">Resumen del Producto</h3>
+  <div *ngIf="resumen" class="mt-8 bg-gray-50 border border-gray-200 p-4 rounded">
+    <h3 class="text-lg font-semibold mb-2 text-gray-800">Resumen del Producto</h3>
     <p><strong>Producto:</strong> {{ resumen.nombreProducto }}</p>
     <p><strong>Total Entradas:</strong> {{ resumen.totalEntradas }}</p>
     <p><strong>Total Salidas:</strong> {{ resumen.totalSalidas }}</p>

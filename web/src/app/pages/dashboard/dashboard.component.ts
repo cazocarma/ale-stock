@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { NgIf, NgClass } from '@angular/common';
 
 @Component({
   selector: 'app-dashboard',
@@ -11,8 +10,6 @@ import { NgIf, NgClass } from '@angular/common';
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
-    NgIf,
-    NgClass
   ],
 })
 export class DashboardComponent implements OnInit {

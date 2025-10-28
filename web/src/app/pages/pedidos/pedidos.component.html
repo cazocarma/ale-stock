@@ -1,5 +1,15 @@
-<div class="bg-white shadow-md rounded-lg p-6">
-  <h2 class="text-xl font-semibold text-gray-700 mb-4">Gestión de Pedidos</h2>
+<div class="max-w-6xl mx-auto bg-white rounded-lg shadow p-6">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold text-blue-800">Gestión de Pedidos</h1>
+    @if (rol === 'Coordinador') {
+      <button
+        (click)="abrirModal()"
+        class="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded"
+      >
+        + Nuevo Pedido
+      </button>
+    }
+  </div>
 
   @if (cargando) {
     <p class="text-gray-500">Cargando pedidos...</p>
@@ -7,40 +17,46 @@
     <p class="text-red-600">{{ error }}</p>
   } @else {
     <div class="overflow-x-auto">
-      <table class="min-w-full border border-gray-200 text-sm text-left">
-        <thead class="bg-blue-700 text-white uppercase text-xs">
+      <table class="min-w-full border-collapse text-sm">
+        <thead class="bg-blue-700 text-white uppercase">
           <tr>
-            <th class="px-4 py-2">ID</th>
-            <th class="px-4 py-2">Fecha</th>
-            <th class="px-4 py-2">Creado Por</th>
-            <th class="px-4 py-2">Estado</th>
-            <th class="px-4 py-2">Detalles</th>
+            <th class="px-4 py-2 text-left">ID</th>
+            <th class="px-4 py-2 text-left">Fecha</th>
+            <th class="px-4 py-2 text-left">Creado Por</th>
+            <th class="px-4 py-2 text-left">Estado</th>
+            <th class="px-4 py-2 text-left">Comentario</th>
+            <th class="px-4 py-2 text-left">Detalles</th>
             <th class="px-4 py-2 text-center">Acciones</th>
           </tr>
         </thead>
         <tbody>
-          @for (let pedido of pedidos; track pedido.id) {
+          @for (pedido of pedidos; track pedido.id) {
             <tr class="border-b hover:bg-gray-50">
               <td class="px-4 py-2">{{ pedido.id }}</td>
-              <td class="px-4 py-2">
-                {{ pedido.fecha | date: 'short' }}
-              </td>
-              <td class="px-4 py-2">{{ pedido.creadoPor?.nombre }}</td>
+              <td class="px-4 py-2">{{ pedido.fecha | date: 'short' }}</td>
+              <td class="px-4 py-2">{{ pedido.creadoPor.nombre }}</td>
+
               <td class="px-4 py-2">
                 <span
                   class="px-2 py-1 rounded text-xs font-medium"
                   [ngClass]="{
                     'bg-green-200 text-green-700': pedido.estado === 'Aprobado',
                     'bg-yellow-200 text-yellow-700': pedido.estado === 'Pendiente',
+                    'bg-blue-200 text-blue-700': pedido.estado === 'Revisado',
                     'bg-red-200 text-red-700': pedido.estado === 'Rechazado'
                   }"
                 >
                   {{ pedido.estado }}
                 </span>
               </td>
+
+              <td class="px-4 py-2 text-gray-700">
+                {{ pedido.comentario || '-' }}
+              </td>
+
               <td class="px-4 py-2">
                 <ul class="list-disc ml-4">
-                  @for (let det of pedido.detalles; track det.id) {
+                  @for (det of pedido.detalles; track det.id) {
                     <li>
                       {{ det.producto?.marca }} {{ det.producto?.modelo }}
                       <span class="text-gray-500">x{{ det.cantidad }}</span>
@@ -48,8 +64,9 @@
                   }
                 </ul>
               </td>
+
               <td class="px-4 py-2 text-center space-x-2">
-                @if (rol === 'Coordinador' && pedido.estado === 'Pendiente') {
+                @if (rol === 'Coordinador' && pedido.estado === 'Revisado') {
                   <button
                     (click)="aprobarPedido(pedido)"
                     class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
@@ -62,12 +79,12 @@
                   >
                     Rechazar
                   </button>
-                } @else if (rol === 'Bodega') {
+                } @else if (rol === 'Bodega' && pedido.estado === 'Pendiente') {
                   <button
-                    (click)="cambiarEstado(pedido)"
+                    (click)="revisarPedido(pedido)"
                     class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
                   >
-                    Cambiar estado
+                    Marcar Revisado
                   </button>
                 }
               </td>
@@ -75,6 +92,69 @@
           }
         </tbody>
       </table>
+    </div>
+  }
+
+  <!-- MODAL NUEVO PEDIDO -->
+  @if (mostrarModal) {
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+      <div class="bg-white rounded-lg shadow-lg p-6 w-[500px]">
+        <h2 class="text-xl font-semibold mb-4 text-blue-800">Nuevo Pedido</h2>
+
+        <div class="space-y-3 max-h-[400px] overflow-y-auto">
+          @for (detalle of nuevoPedido; track $index; let i = $index) {
+            <div class="flex gap-3 items-center">
+              <select
+                [(ngModel)]="detalle.productoId"
+                class="border rounded px-2 py-1 flex-1"
+              >
+                <option value="0">Seleccionar producto</option>
+                @for (prod of productos; track prod.id) {
+                  <option [value]="prod.id">
+                    {{ prod.sku }} - {{ prod.marca }} {{ prod.modelo }}
+                  </option>
+                }
+              </select>
+
+              <input
+                type="number"
+                min="1"
+                [(ngModel)]="detalle.cantidad"
+                class="border rounded px-2 py-1 w-24"
+              />
+
+              <button
+                (click)="eliminarFila(i)"
+                class="text-red-600 hover:text-red-800 font-semibold"
+              >
+                ✕
+              </button>
+            </div>
+          }
+
+          <button
+            (click)="agregarFila()"
+            class="text-blue-600 hover:text-blue-800 text-sm font-medium"
+          >
+            + Agregar producto
+          </button>
+        </div>
+
+        <div class="mt-6 flex justify-end gap-3">
+          <button
+            (click)="mostrarModal = false"
+            class="border border-gray-300 px-4 py-2 rounded hover:bg-gray-100"
+          >
+            Cancelar
+          </button>
+          <button
+            (click)="crearPedido()"
+            class="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded"
+          >
+            Crear Pedido
+          </button>
+        </div>
+      </div>
     </div>
   }
 </div>

@@ -1,5 +1,5 @@
-<div class="max-w-6xl mx-auto">
-  <h1 class="text-2xl font-bold mb-6 text-blue-800">Gestión de Productos</h1>
+<div class="max-w-6xl mx-auto bg-white rounded-lg shadow p-6">
+  <h1 class="text-2xl font-bold text-blue-800 mb-6">Gestión de Productos</h1>
 
   <!-- Buscador -->
   <div class="flex gap-2 mb-6">
@@ -13,27 +13,15 @@
   </div>
 
   <!-- Formulario -->
-  <div class="bg-white p-4 rounded shadow mb-6">
-    <h2 class="text-lg font-semibold mb-4">
+  <div class="bg-gray-50 p-4 rounded border border-gray-200 mb-6">
+    <h2 class="text-lg font-semibold mb-4 text-gray-800">
       {{ editando ? 'Editar Producto' : 'Nuevo Producto' }}
     </h2>
 
-    <div class="grid grid-cols-4 gap-3 mb-3">
-      <input
-        [(ngModel)]="productoForm.sku"
-        placeholder="SKU"
-        class="border px-3 py-2 rounded"
-      />
-      <input
-        [(ngModel)]="productoForm.marca"
-        placeholder="Marca"
-        class="border px-3 py-2 rounded"
-      />
-      <input
-        [(ngModel)]="productoForm.modelo"
-        placeholder="Modelo"
-        class="border px-3 py-2 rounded"
-      />
+    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-3">
+      <input [(ngModel)]="productoForm.sku" placeholder="SKU" class="border px-3 py-2 rounded" />
+      <input [(ngModel)]="productoForm.marca" placeholder="Marca" class="border px-3 py-2 rounded" />
+      <input [(ngModel)]="productoForm.modelo" placeholder="Modelo" class="border px-3 py-2 rounded" />
       <select [(ngModel)]="productoForm.estado" class="border px-3 py-2 rounded">
         <option value="activo">Activo</option>
         <option value="descontinuado">Descontinuado</option>
@@ -55,26 +43,26 @@
   </div>
 
   <!-- Tabla -->
-  <div class="bg-white rounded shadow overflow-hidden">
-    <table class="min-w-full text-left border-collapse">
-      <thead class="bg-blue-700 text-white">
+  <div class="overflow-x-auto">
+    <table class="min-w-full border-collapse text-sm">
+      <thead class="bg-blue-700 text-white uppercase">
         <tr>
-          <th class="py-2 px-4">ID</th>
-          <th class="py-2 px-4">SKU</th>
-          <th class="py-2 px-4">Marca</th>
-          <th class="py-2 px-4">Modelo</th>
-          <th class="py-2 px-4">Estado</th>
-          <th class="py-2 px-4 text-center">Acciones</th>
+          <th class="px-4 py-2 text-left">ID</th>
+          <th class="px-4 py-2 text-left">SKU</th>
+          <th class="px-4 py-2 text-left">Marca</th>
+          <th class="px-4 py-2 text-left">Modelo</th>
+          <th class="px-4 py-2 text-left">Estado</th>
+          <th class="px-4 py-2 text-center">Acciones</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let p of productos" class="border-b hover:bg-gray-50">
-          <td class="py-2 px-4">{{ p.id }}</td>
-          <td class="py-2 px-4">{{ p.sku }}</td>
-          <td class="py-2 px-4">{{ p.marca }}</td>
-          <td class="py-2 px-4">{{ p.modelo }}</td>
-          <td class="py-2 px-4">{{ p.estado }}</td>
-          <td class="py-2 px-4 text-center">
+          <td class="px-4 py-2">{{ p.id }}</td>
+          <td class="px-4 py-2">{{ p.sku }}</td>
+          <td class="px-4 py-2">{{ p.marca }}</td>
+          <td class="px-4 py-2">{{ p.modelo }}</td>
+          <td class="px-4 py-2">{{ p.estado }}</td>
+          <td class="px-4 py-2 text-center">
             <button (click)="editar(p)" class="text-blue-600 hover:underline mr-2">Editar</button>
             <button (click)="eliminar(p.id)" class="text-red-600 hover:underline">Eliminar</button>
           </td>
